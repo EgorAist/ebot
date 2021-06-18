@@ -3,13 +3,14 @@ package main
 import (
 	"fmt"
 	"github.com/EgorAist/ebot/elasticsearch"
+	"github.com/EgorAist/ebot/minhash"
 	"github.com/EgorAist/ebot/models"
 	"github.com/EgorAist/ebot/parser"
 )
 
 const url = "https://lenta.ru/rss/last24"
 const (
-	wordSearch                 = "Боевой"
+	wordSearch                 = "он"
 	wordTermAggregation        = "author"
 	wordCardinalityAggregation = "author"
 )
@@ -107,4 +108,11 @@ func main()  {
 		fmt.Printf("Key: %v\n", t.Key)
 		fmt.Printf("Count: %d\n", t.Count)
 	}
+
+	text1 := minhash.SplitShingles(items[0].Text)
+	text2 := minhash.SplitShingles(items[1].Text)
+
+	j := minhash.CompareByMinHash(text1, text2)
+
+	fmt.Println("Jaccard index: ", j)
 }

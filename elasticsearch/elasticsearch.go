@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/EgorAist/ebot/models"
-
 	"github.com/olivere/elastic/v7"
 	"os"
 
