@@ -1,11 +1,14 @@
-package main
+package parser
 
 import (
 	"bytes"
 	"encoding/xml"
 	"fmt"
+	"github.com/EgorAist/ebot/models"
+	"github.com/pkg/errors"
 	"golang.org/x/net/html"
 	"strings"
+	"time"
 )
 
 type RSS struct {
@@ -27,12 +30,12 @@ type XMLItem struct {
 	Category    string   `xml:"category"`
 }
 
-func ParsePage(url string) ([]Item, error) {
+func ParsePage(url string) ([]*models.Item, error) {
 	var rss RSS
 
 	byteValue, err := LoadPage(url)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "in ParsePage")
 	}
 
 	err = xml.Unmarshal(byteValue, &rss)
@@ -40,30 +43,38 @@ func ParsePage(url string) ([]Item, error) {
 		return nil, err
 	}
 
-	var items []Item
+	var items []*models.Item
 
 	for _, item := range rss.Channel.Items {
-		text, err := ParseItemPage(item.Link)
-		if err != nil {
-			return nil, err
-		}
-
-		items = append(items, Item{
+		date, _ := time.Parse(time.RFC1123Z, item.PubDate)
+		items = append(items, &models.Item{
 			Author:  item.Author,
 			Title:   item.Title,
 			Link:    item.Link,
-			PubDate: item.PubDate,
-			Text:    text,
+			PubDate: date,
 		})
 	}
 
 	return items, nil
 }
 
-func PrintItems(items []Item)  {
+func ParsItems(items []*models.Item) ([]*models.Item, error) {
+
+	for _, item := range items {
+		text, err := ParseItemPage(item.Link)
+		if err != nil {
+			return nil, err
+		}
+
+		item.Text = text
+	}
+
+	return items, nil
+}
+
+func PrintItems(items []*models.Item)  {
 	for _, item := range items{
 		fmt.Println("Title: " 	+ item.Title)
-		fmt.Println("PubDate: " + item.PubDate)
 		fmt.Println("Author: " 	+ item.Author)
 		fmt.Println("Link: " 	+ item.Link)
 		fmt.Println("Text: " 	+ item.Text)
